@@ -1,8 +1,8 @@
 from socket import *
 serverPort = int(input("Enter port number: "))
 serverSocket = socket(AF_INET,SOCK_STREAM)
-serverSocket.listen(1)
 serverSocket.bind(('',serverPort))
+serverSocket.listen(1)
 print('The server is ready to receive')
 
 clients_new_file_size = {}
@@ -11,31 +11,42 @@ clients_new_file_id   = {}
 while True:
    connectionSocket, addr = serverSocket.accept()
 
-   request = connectionSocket.recv(1024).decode()
-   if request.startswith('PUT'):
-         parts = request.split(' ', 2)
-         filename = parts[0].split()[1]
 
-         total_size = int(parts[1])
-         chunk = parts[2]
-   
-         if addr not in clients_new_file_size:
-            clients_new_file_size[addr] = total_size
-            if addr not in clients_new_file_id:
-               clients_new_file_id[addr] = 0
-            else:
+   request = connectionSocket.recv(4096).decode()
+   print(f"Receiving file from {addr}")
+   if request.strip().upper().startswith('PUT'):
+      try:
+         parts = request.split(' ', 3)
+         if len(parts) < 4:
+            print(f"Comando PUT mal formatado recebido: {request}")
+         else:
+            _, filename, total_size_str, chunk = parts
+            total_size = int(total_size_str)
+
+            import os
+            if not os.path.exists('uploads'):
+               os.makedirs('uploads')
+
+            if addr not in clients_new_file_size:
+               clients_new_file_size[addr] = total_size
+               if addr not in clients_new_file_id:
+                  clients_new_file_id[addr] = 0
+               else:
+                  clients_new_file_id[addr] += 1
+
+            file_id = clients_new_file_id[addr]
+            file_path = f'uploads/{addr}_{filename}'
+            with open(file_path, 'a', encoding='utf-8') as file:
+               file.write(chunk)
+
+            clients_new_file_size[addr] -= len(chunk)
+
+            if clients_new_file_size[addr] <= 0:
+               print(f"File upload complete: {file_path}")
                clients_new_file_id[addr] += 1
-
-         file_id = clients_new_file_id[addr]
-         with open(f'uploads/{addr}_{filename}', 'a') as file:
-            file.write(chunk)
-   
-         clients_new_file_size[addr] -= len(chunk)
-   
-         if clients_new_file_size[addr] <= 0:
-            print(f"File upload complete: uploaded_file_{file_id}.{file_ext}")
-            clients_new_file_id[addr] += 1
-            del clients_new_file_size[addr]
+               del clients_new_file_size[addr]
+      except Exception as e:
+         print(f"Erro ao processar comando PUT: {e}\nConteúdo recebido: {request}")
 
    elif request.startswith('LIST'):
          import os
