@@ -13,6 +13,9 @@ clientSocket.send(username.encode())
 while True:
     command = input("Enter command: ")
     if command == 'QUIT':
+        clientSocket.send(command.encode())
+        response = clientSocket.recv(4096).decode()
+        print(response)
         break
     if command.startswith('PUT'):
         filepath = command.split()[1]

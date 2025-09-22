@@ -68,6 +68,14 @@ def handle_client(connectionSocket, addr):
                continue
             # Salva arquivo com nome do usuario
             filepath = os.path.join(UPLOADS_DIR, f'{username}_{filename}')
+
+            # Verifica se o arquivo já existe
+            if os.path.exists(filepath):
+                    connectionSocket.send(b'Error: File already exists')
+                    total_sent += len('Error: File already exists')
+                    log_lines.append(f"[{time.strftime('%H:%M:%S')}] Enviado: Error: File already exists")
+                    continue
+            
             with open(filepath, 'wb') as f:
                f.write(filedata.encode())
                bytes_written = len(filedata.encode())
