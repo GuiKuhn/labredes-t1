@@ -12,26 +12,13 @@ os.makedirs(UPLOADS_DIR, exist_ok=True)
 os.makedirs(LOGS_DIR, exist_ok=True)
 
 
-# Função para remover acentos dos logs
-import unicodedata
-
-
-def remove_acentos(txt):
-    return "".join(
-        c for c in unicodedata.normalize("NFD", txt) if unicodedata.category(c) != "Mn"
-    )
-
-
 # Função para registrar logs de cada conexão
-
-
-# Função para registrar logs de cada conexão (agora por nome de usuário)
 def log_connection(username, log_lines):
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     log_file = os.path.join(LOGS_DIR, f"log_{username}_{timestamp}.txt")
     with open(log_file, "w") as f:
         for line in log_lines:
-            f.write(remove_acentos(line) + "\n")
+            f.write(line + "\n")
 
 
 def handle_client(connectionSocket, addr):
